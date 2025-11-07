@@ -9,43 +9,40 @@ function App() {
       try {
         const [asterRes, hlRes] = await Promise.all([
           fetch(`/api/asterdex?pair=${pair}`),
-          fetch(`/api/hyperliquid?pair=${pair}`),
+          fetch(`/api/hyperliquid?coin=${pair.split("-")[0]}`),
         ]);
+
         const aster = await asterRes.json();
         const hl = await hlRes.json();
+
         setFundings({ aster, hl });
       } catch (e) {
         console.error("Erreur de fetch:", e);
       }
     }
     fetchData();
-    const interval = setInterval(fetchData, 10_000);
-    return () => clearInterval(interval);
   }, [pair]);
 
-  if (!fundings) return <p>Chargement des fundings...</p>;
-
-  const diff = fundings.aster.rate - fundings.hl.rate;
-  const side = diff > 0 ? "Short HL / Long Asterdex" : "Short Asterdex / Long HL";
-
   return (
-    <div style={{ fontFamily: "sans-serif", padding: 20 }}>
+    <div style={{ textAlign: "center", marginTop: "3rem" }}>
       <h1>Funding Arbitrage Comparer</h1>
-      <label>
-        Choisir la paire :
-        <select value={pair} onChange={(e) => setPair(e.target.value)}>
-          <option>BTC-USDT</option>
-          <option>ETH-USDT</option>
-          <option>SOL-USDT</option>
-        </select>
-      </label>
 
-      <h2>Résultats</h2>
-      <p>Asterdex : {fundings.aster.rate}%</p>
-      <p>Hyperliquid : {fundings.hl.rate}%</p>
-      <p>
-        <strong>Arbitrage conseillé :</strong> {side}
-      </p>
+      <select value={pair} onChange={(e) => setPair(e.target.value)}>
+        <option>BTC-USDT</option>
+        <option>ETH-USDT</option>
+        <option>SOL-USDT</option>
+      </select>
+
+      <div style={{ marginTop: "2rem" }}>
+        {!fundings ? (
+          <p>Chargement des fundings...</p>
+        ) : (
+          <div>
+            <p>AsterDex funding : {fundings.aster?.funding ?? "?"}</p>
+            <p>Hyperliquid funding : {fundings.hl?.funding ?? "?"}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
