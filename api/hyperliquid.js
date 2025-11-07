@@ -3,8 +3,7 @@ export default async function handler(req, res){
 try{
 const coin = (req.query.coin || req.body.coin || 'BTC').toUpperCase()
 // Construire le payload attendu
-const payload = {
-type: 'assetContexts',
+const payload = type: 'assetContexts',
 coin
 }
 
