@@ -24,7 +24,11 @@ function App() {
         const aster = await asterRes.json();
         const hl = await hlRes.json();
 
-        setFundings({ aster, hl });
+        // Conversion en pourcentage
+        setFundings({
+          aster: { funding: aster?.funding != null ? (aster.funding * 100).toFixed(4) : "?" },
+          hl: { funding: hl?.funding != null ? (hl.funding * 100).toFixed(4) : "?" },
+        });
       } catch (e) {
         console.error("Erreur de fetch:", e);
         setFundings({ aster: { funding: "?" }, hl: { funding: "?" } });
@@ -50,8 +54,8 @@ function App() {
           <p>Chargement des fundings...</p>
         ) : (
           <div>
-            <p>AsterDex funding : {fundings.aster?.funding ?? "?"}</p>
-            <p>Hyperliquid funding : {fundings.hl?.funding ?? "?"}</p>
+            <p>AsterDex funding : {fundings.aster?.funding} %</p>
+            <p>Hyperliquid funding : {fundings.hl?.funding} %</p>
           </div>
         )}
       </div>
