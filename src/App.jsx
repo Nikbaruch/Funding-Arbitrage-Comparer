@@ -10,27 +10,40 @@ function App() {
     "SOL-USDT",
     "0G-USDT",
     "ASTER-USDT",
+    "BNB-USDT",
+    "XRP-USDT",
+    "ADA-USDT",
+    "DOGE-USDT",
+    "LTC-USDT",
+    "DOT-USDT",
+    "AVAX-USDT",
+    "MATIC-USDT",
+    "SHIB-USDT",
+    "UNI-USDT",
+    "LINK-USDT",
+    "ATOM-USDT",
+    "ALGO-USDT",
+    "FTM-USDT",
+    "TRX-USDT",
   ];
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const baseCoin = pair.split("-")[0];
         const [asterRes, hlRes] = await Promise.all([
           fetch(`/api/asterdex?pair=${pair}`),
-          fetch(`/api/hyperliquid?coin=${baseCoin}`),
+          fetch(`/api/hyperliquid?coin=${pair.split("-")[0]}`),
         ]);
 
         const aster = await asterRes.json();
         const hl = await hlRes.json();
 
-        // Harmonisation : convertir tous les taux en %/heure pour comparer
         const harmonized = {
-          aster: aster?.funding ?? null, // AsterDex retourne déjà hourly
-          hl: hl?.funding ? hl.funding / 8 : null, // Hyperliquid retourne sur 8h → diviser pour hourly
+          aster: aster?.funding != null ? aster.funding * 100 : null,
+          hl: hl?.funding != null ? hl.funding * 100 : null,
         };
 
-        setFundings({ aster, hl, harmonized });
+        setFundings({ raw: { aster, hl }, harmonized });
       } catch (e) {
         console.error("Erreur de fetch:", e);
       }
@@ -39,7 +52,7 @@ function App() {
   }, [pair]);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "2rem" }}>
+    <div style={{ textAlign: "center", marginTop: "3rem" }}>
       <h1>Funding Arbitrage Comparer</h1>
 
       <select value={pair} onChange={(e) => setPair(e.target.value)}>
@@ -53,22 +66,18 @@ function App() {
           <p>Chargement des fundings...</p>
         ) : (
           <div>
-            <h3>Comme sur le site :</h3>
-            <p>AsterDex funding : {fundings.aster?.funding ?? "?"}</p>
-            <p>Hyperliquid funding : {fundings.hl?.funding ?? "?"}</p>
+            <h2>Comme sur le site :</h2>
+            <p>AsterDex funding : {fundings.raw.aster?.funding ?? "?"}</p>
+            <p>Hyperliquid funding : {fundings.raw.hl?.funding ?? "?"}</p>
 
-            <h3 style={{ marginTop: "1rem" }}>Harmonisé pour comparaison :</h3>
+            <h2>Harmonisé pour comparaison (%/h) :</h2>
             <p>
               AsterDex funding (hourly %) :{" "}
-              {fundings.harmonized.aster != null
-                ? (fundings.harmonized.aster * 100).toFixed(4) + " %"
-                : "?"}
+              {fundings.harmonized.aster?.toFixed(4) ?? "?"} %
             </p>
             <p>
               Hyperliquid funding (hourly %) :{" "}
-              {fundings.harmonized.hl != null
-                ? (fundings.harmonized.hl * 100).toFixed(4) + " %"
-                : "?"}
+              {fundings.harmonized.hl?.toFixed(4) ?? "?"} %
             </p>
           </div>
         )}
