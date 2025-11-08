@@ -5,8 +5,9 @@ export default async function handler(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const coin = (url.searchParams.get("coin") || "BTC").toUpperCase();
 
+    // ✅ Nouveau payload attendu par Hyperliquid
     const payload = {
-      type: "assetContexts",
+      type: "fundingHistory",
       coin,
     };
 
@@ -18,30 +19,24 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const text = await response.text();
-      return res.status(502).json({ error: "hyperliquid_bad_response", detail: text });
+      return res
+        .status(502)
+        .json({ error: "hyperliquid_bad_response", detail: text });
     }
 
     const json = await response.json();
 
-    // 🔍 debug: afficher tout ce que renvoie l'API
-    console.log("Hyperliquid API response:", JSON.stringify(json, null, 2));
-
+    // 🔍 Exemple de structure : [ { "rate": -0.00008, "time": 1731000000 }, ... ]
     let funding = null;
-
-    if (json?.assetContexts && Array.isArray(json.assetContexts)) {
-      const ctx = json.assetContexts.find(a => a.coin === coin);
-      if (ctx && ctx.currentFundingRate != null) funding = Number(ctx.currentFundingRate);
+    if (Array.isArray(json) && json.length > 0 && json[0].rate != null) {
+      funding = Number(json[0].rate);
     }
-
-    if (funding == null && json?.currentFundingRate != null)
-      funding = Number(json.currentFundingRate);
-
-    if (funding == null && json?.predictedFundings?.length)
-      funding = Number(json.predictedFundings[0]?.rate);
 
     return res.status(200).json({ funding });
   } catch (e) {
     console.error("Erreur Hyperliquid:", e);
-    return res.status(500).json({ error: "server_error", message: String(e) });
+    return res
+      .status(500)
+      .json({ error: "server_error", message: String(e) });
   }
 }
